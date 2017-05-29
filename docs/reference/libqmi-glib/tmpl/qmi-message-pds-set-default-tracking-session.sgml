@@ -1,0 +1,141 @@
+<!-- ##### SECTION Title ##### -->
+PDS Set Default Tracking Session
+
+<!-- ##### SECTION Short_Description ##### -->
+
+
+<!-- ##### SECTION Long_Description ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION See_Also ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### SECTION Stability_Level ##### -->
+
+
+<!-- ##### SECTION Image ##### -->
+
+
+<!-- ##### STRUCT QmiMessagePdsSetDefaultTrackingSessionInput ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### STRUCT QmiMessagePdsSetDefaultTrackingSessionOutput ##### -->
+<para>
+
+</para>
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_input_new ##### -->
+<para>
+
+</para>
+
+@void: 
+@Returns: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_input_ref ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_input_unref ##### -->
+<para>
+
+</para>
+
+@self: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_input_get_info ##### -->
+<para>
+
+</para>
+
+@self: 
+@info_session_operation: 
+@info_position_data_timeout: 
+@info_interval: 
+@info_accuracy_threshold: 
+@error: 
+@Returns: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_input_set_info ##### -->
+<para>
+
+</para>
+
+@self: 
+@info_session_operation: 
+@info_position_data_timeout: 
+@info_interval: 
+@info_accuracy_threshold: 
+@error: 
+@Returns: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_output_ref ##### -->
+<para>
+
+</para>
+
+@self: 
+@Returns: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_output_unref ##### -->
+<para>
+
+</para>
+
+@self: 
+
+
+<!-- ##### FUNCTION qmi_message_pds_set_default_tracking_session_output_get_result ##### -->
+<para>
+
+</para>
+
+@self: 
+@error: 
+@Returns: 
+
+
+<!-- ##### FUNCTION qmi_client_pds_set_default_tracking_session ##### -->
+<para>
+
+</para>
+
+@self: 
+@input: 
+@timeout: 
+@cancellable: 
+@callback: 
+@user_data: 
+
+
+<!-- ##### FUNCTION qmi_client_pds_set_default_tracking_session_finish ##### -->
+<para>
+
+</para>
+
+@self: 
+@res: 
+@error: 
+@Returns: 
+
+
