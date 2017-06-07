@@ -1,0 +1,74 @@
+From 74876730672b77a0be31acd0b9f86e5fc96a65a6 Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Mon, 6 Jun 2016 15:50:18 +0200
+Subject: [PATCH 11/19] libqmi-glib,version: new symbol to flag qmi-over-mbim
+ support
+
+---
+ configure.ac                                           |  4 ++++
+ docs/reference/libqmi-glib/libqmi-glib-common.sections |  3 ++-
+ src/libqmi-glib/qmi-version.h.in                       | 17 +++++++++++++++++
+ 3 files changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 5eb4d5d..4e7f7d9 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -114,7 +114,11 @@ if test "x$enable_mbim_qmux" = "xyes"; then
+     AC_DEFINE(MBIM_QMUX_ENABLED, 1, [Define if MBIM QMUX support enabled])
+     AC_SUBST(MBIM_CFLAGS)
+     AC_SUBST(MBIM_LIBS)
++    QMI_MBIM_QMUX_SUPPORTED=1
++else
++    QMI_MBIM_QMUX_SUPPORTED=0
+ fi
++AC_SUBST(QMI_MBIM_QMUX_SUPPORTED)
+ 
+ # udev base directory
+ AC_ARG_WITH(udev-base-dir, AS_HELP_STRING([--with-udev-base-dir=DIR], [where udev base directory is]))
+diff --git a/docs/reference/libqmi-glib/libqmi-glib-common.sections b/docs/reference/libqmi-glib/libqmi-glib-common.sections
+index a34226d..5d37ebd 100644
+--- a/docs/reference/libqmi-glib/libqmi-glib-common.sections
++++ b/docs/reference/libqmi-glib/libqmi-glib-common.sections
+@@ -1,10 +1,11 @@
+ <SECTION>
+ <FILE>qmi-version</FILE>
+-<TITLE>Version checks</TITLE>
++<TITLE>Version and feature checks</TITLE>
+ QMI_MAJOR_VERSION
+ QMI_MINOR_VERSION
+ QMI_MICRO_VERSION
+ QMI_CHECK_VERSION
++QMI_MBIM_QMUX_SUPPORTED
+ </SECTION>
+ 
+ <SECTION>
+diff --git a/src/libqmi-glib/qmi-version.h.in b/src/libqmi-glib/qmi-version.h.in
+index 22dda01..3369d2e 100644
+--- a/src/libqmi-glib/qmi-version.h.in
++++ b/src/libqmi-glib/qmi-version.h.in
+@@ -66,4 +66,21 @@
+      (QMI_MAJOR_VERSION == (major) && QMI_MINOR_VERSION > (minor)) || \
+      (QMI_MAJOR_VERSION == (major) && QMI_MINOR_VERSION == (minor) && QMI_MICRO_VERSION >= (micro)))
+ 
++/**
++ * QMI_MBIM_QMUX_SUPPORTED:
++ *
++ * Symbol to expose wether QMI over MBIM is supported. The symbol is always
++ * defined and set to either or 1 or 0.
++ *
++ * E.g.:
++ * |[
++ *  #if QMI_MBIM_QMUX_SUPPORTED
++ *      // do something
++ *  #endif
++ * ]|
++ *
++ * Since: 1.16
++ */
++#define QMI_MBIM_QMUX_SUPPORTED @QMI_MBIM_QMUX_SUPPORTED@
++
+ #endif /* _QMI_VERSION_H_ */
+-- 
+2.11.0
+

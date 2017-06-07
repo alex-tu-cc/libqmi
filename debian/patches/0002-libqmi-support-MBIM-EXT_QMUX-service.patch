@@ -1,0 +1,328 @@
+From 5b90e8b48439d767a5b85757c3070a9456a25d94 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B8rn=20Mork?= <bjorn@mork.no>
+Date: Mon, 4 Apr 2016 14:44:01 +0200
+Subject: [PATCH 02/19] libqmi: support MBIM EXT_QMUX service
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Bjørn Mork <bjorn@mork.no>
+---
+ configure.ac                 |  13 ++++
+ src/libqmi-glib/Makefile.am  |   4 +-
+ src/libqmi-glib/qmi-device.c | 155 ++++++++++++++++++++++++++++++++++++++++++-
+ src/libqmi-glib/qmi-device.h |   4 +-
+ 4 files changed, 171 insertions(+), 5 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index c52c4b6..e370c48 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -95,6 +95,18 @@ fi
+ 
+ AM_CONDITIONAL([QMI_USERNAME_ENABLED], [test "x$QMI_USERNAME_ENABLED" = "xyes"])
+ 
++# MBIM QMUX service support
++AC_ARG_ENABLE(mbim-qmux,
++              AS_HELP_STRING([--enable-mbim-qmux], [support QMI over MBIM QMUX service]))
++if test -n "$enable_mbim_qmux"; then
++    PKG_CHECK_MODULES(MBIM, mbim-glib >= 1.13)
++    MBIM_CFLAGS="$MBIM_CFLAGS -DMBIM_QMUX"
++    AC_SUBST(MBIM_CFLAGS)
++    AC_SUBST(MBIM_LIBS)
++fi
++
++AM_CONDITIONAL(MBIM_QMUX, [test -n "$MBIM_CFLAGS"])
++
+ # udev base directory
+ AC_ARG_WITH(udev-base-dir, AS_HELP_STRING([--with-udev-base-dir=DIR], [where udev base directory is]))
+ if test -n "$with_udev_base_dir" ; then
+@@ -146,4 +158,5 @@ echo "
+     udev base directory:  ${UDEV_BASE_DIR}
+     Documentation:        ${enable_gtk_doc}
+     QMI username:         ${QMI_USERNAME_ENABLED} (${QMI_USERNAME})
++    QMUX over MBIM:       ${enable_mbim_qmux}
+ "
+diff --git a/src/libqmi-glib/Makefile.am b/src/libqmi-glib/Makefile.am
+index a29574c..8a7a4cb 100644
+--- a/src/libqmi-glib/Makefile.am
++++ b/src/libqmi-glib/Makefile.am
+@@ -5,6 +5,7 @@ lib_LTLIBRARIES = libqmi-glib.la
+ 
+ libqmi_glib_la_CPPFLAGS = \
+ 	$(GLIB_CFLAGS) \
++	$(MBIM_CFLAGS) \
+ 	-I$(top_srcdir) \
+ 	-I$(top_builddir) \
+ 	-I$(top_srcdir)/src/libqmi-glib \
+@@ -37,7 +38,8 @@ libqmi_glib_la_SOURCES = \
+ 
+ libqmi_glib_la_LIBADD = \
+ 	${top_builddir}/src/libqmi-glib/generated/libqmi-glib-generated.la \
+-	$(GLIB_LIBS)
++	$(GLIB_LIBS) \
++	$(MBIM_LIBS)
+ 
+ libqmi_glib_la_LDFLAGS = \
+ 	-version-info $(QMI_GLIB_LT_CURRENT):$(QMI_GLIB_LT_REVISION):$(QMI_GLIB_LT_AGE)
+diff --git a/src/libqmi-glib/qmi-device.c b/src/libqmi-glib/qmi-device.c
+index d50c5b9..a3a4565 100644
+--- a/src/libqmi-glib/qmi-device.c
++++ b/src/libqmi-glib/qmi-device.c
+@@ -31,6 +31,10 @@
+ #include <gio/gunixoutputstream.h>
+ #include <gio/gunixsocketaddress.h>
+ 
++#ifdef MBIM_QMUX
++#include <libmbim-glib.h>
++#endif
++
+ #include "qmi-device.h"
+ #include "qmi-message.h"
+ #include "qmi-ctl.h"
+@@ -89,6 +93,10 @@ struct _QmiDevicePrivate {
+     gchar *path_display;
+     gboolean no_file_check;
+     gchar *proxy_path;
++    gboolean mbim_qmux;
++#ifdef MBIM_QMUX
++    MbimDevice *mbimdev;
++#endif
+ 
+     /* Implicit CTL client */
+     QmiClientCtl *client_ctl;
+@@ -1392,7 +1400,6 @@ input_ready_cb (GInputStream *istream,
+         self->priv->buffer = g_byte_array_sized_new (r);
+     g_byte_array_append (self->priv->buffer, buffer, r);
+ 
+-    /* Try to parse input messages */
+     parse_response (self);
+ 
+     return TRUE;
+@@ -1837,6 +1844,56 @@ internal_proxy_open_ready (QmiClientCtl *client_ctl,
+     device_open_context_step (ctx);
+ }
+ 
++#ifdef MBIM_QMUX
++static void
++mbim_device_open_ready (MbimDevice *dev,
++                        GAsyncResult *res,
++                        DeviceOpenContext *ctx)
++{
++        GError *error = NULL;
++
++        if (!mbim_device_open_finish (dev, res, &error)) {
++            g_simple_async_result_take_error (ctx->result, error);
++            device_open_context_complete_and_free (ctx);
++            return;
++        }
++        g_debug ("[%s] MBIM device Open..",
++                ctx->self->priv->path_display);
++
++        /* Go on */
++        ctx->step++;
++        device_open_context_step (ctx);
++        return;
++}
++
++static void
++mbim_device_new_ready (GObject *source,
++                       GAsyncResult *res,
++                       DeviceOpenContext *ctx)
++{
++    MbimDeviceOpenFlags open_flags = MBIM_DEVICE_OPEN_FLAGS_NONE;
++    GError *error = NULL;
++    MbimDevice *device;
++
++    if (ctx->flags & QMI_DEVICE_OPEN_FLAGS_PROXY)
++        open_flags |= MBIM_DEVICE_OPEN_FLAGS_PROXY;
++    device = mbim_device_new_finish (res, &error);
++    if (!device) {
++        g_simple_async_result_take_error (ctx->result, error);
++        device_open_context_complete_and_free (ctx);
++        return;
++    }
++    ctx->self->priv->mbimdev = device;
++
++    mbim_device_open_full(device,
++                          open_flags,
++                          30,
++                          ctx->cancellable,
++                          (GAsyncReadyCallback)mbim_device_open_ready,
++                          ctx);
++}
++#endif
++
+ static void
+ create_iostream_ready (QmiDevice *self,
+                        GAsyncResult *res,
+@@ -1869,6 +1926,20 @@ device_open_context_step (DeviceOpenContext *ctx)
+         /* Fall down */
+ 
+     case DEVICE_OPEN_CONTEXT_STEP_CREATE_IOSTREAM:
++#ifdef MBIM_QMUX
++        if (ctx->flags & QMI_DEVICE_OPEN_FLAGS_MBIM) {
++            GFile *file;
++
++            ctx->self->priv->mbim_qmux = TRUE;
++            file = g_file_new_for_path (ctx->self->priv->path);
++            mbim_device_new (file,
++                             ctx->cancellable,
++                             (GAsyncReadyCallback)mbim_device_new_ready,
++                             ctx);
++            g_object_unref (file);
++            return;
++        }
++#endif
+         create_iostream (ctx->self,
+                          !!(ctx->flags & QMI_DEVICE_OPEN_FLAGS_PROXY),
+                          (GAsyncReadyCallback)create_iostream_ready,
+@@ -1877,7 +1948,8 @@ device_open_context_step (DeviceOpenContext *ctx)
+ 
+     case DEVICE_OPEN_CONTEXT_STEP_FLAGS_PROXY:
+         /* Initialize communication with proxy? */
+-        if (ctx->flags & QMI_DEVICE_OPEN_FLAGS_PROXY) {
++        if (ctx->flags & QMI_DEVICE_OPEN_FLAGS_PROXY &&
++            !(ctx->flags & QMI_DEVICE_OPEN_FLAGS_MBIM)) {
+             QmiMessageCtlInternalProxyOpenInput *input;
+ 
+             input = qmi_message_ctl_internal_proxy_open_input_new ();
+@@ -2072,6 +2144,21 @@ destroy_iostream (QmiDevice *self,
+     return TRUE;
+ }
+ 
++#ifdef MBIM_QMUX
++static void
++mbim_device_close_ready (MbimDevice   *dev,
++                    GAsyncResult *res)
++{
++    GError *error = NULL;
++
++    if (!mbim_device_close_finish (dev, res, &error)) {
++        g_printerr ("error: couldn't close device: %s", error->message);
++        g_error_free (error);
++    } else
++        g_debug ("Device closed");
++}
++#endif
++
+ /**
+  * qmi_device_close:
+  * @self: a #QmiDevice
+@@ -2089,6 +2176,15 @@ qmi_device_close (QmiDevice *self,
+ {
+     g_return_val_if_fail (QMI_IS_DEVICE (self), FALSE);
+ 
++#ifdef MBIM_QMUX
++    if (self->priv->mbim_qmux)
++        mbim_device_close (self->priv->mbimdev,
++                           15,
++                           NULL,
++                           (GAsyncReadyCallback) mbim_device_close_ready,
++                           NULL);
++    else
++#endif
+     if (!destroy_iostream (self, error)) {
+         g_prefix_error (error, "Cannot close QMI device: ");
+         return FALSE;
+@@ -2097,6 +2193,41 @@ qmi_device_close (QmiDevice *self,
+     return TRUE;
+ }
+ 
++#ifdef MBIM_QMUX
++static void
++mbim_device_command_ready (MbimDevice   *dev,
++                           GAsyncResult *res,
++                           QmiDevice *qmidev)
++{
++        MbimMessage *response;
++        GError *error = NULL;
++        const guint8 *buf;
++        guint32 len;
++
++        response = mbim_device_command_finish (dev, res, &error);
++        if (!response || !mbim_message_response_get_result (response, MBIM_MESSAGE_TYPE_COMMAND_DONE, &error)) {
++            g_prefix_error (&error, "MBIM error: ");
++            // transaction_complete_and_free (tr, NULL, error);
++            g_error_free (error);
++            mbim_message_unref (response);
++            return;
++        }
++
++        g_debug ("[%s] Received MBIM message\n", qmidev->priv->path_display);
++
++        /* get the information buffer */
++        buf = mbim_message_command_done_get_raw_information_buffer (response, &len);
++        if (!G_UNLIKELY (qmidev->priv->buffer))
++            qmidev->priv->buffer = g_byte_array_sized_new (len);
++        g_byte_array_append (qmidev->priv->buffer, buf, len);
++
++        /* and parse it as QMI */
++        parse_response(qmidev);
++        mbim_message_unref (response);
++        return;
++}
++#endif
++
+ /*****************************************************************************/
+ /* Command */
+ 
+@@ -2165,7 +2296,7 @@ qmi_device_command (QmiDevice *self,
+     tr = transaction_new (self, message, cancellable, callback, user_data);
+ 
+     /* Device must be open */
+-    if (!self->priv->istream || !self->priv->ostream) {
++    if ((!self->priv->istream || !self->priv->ostream) && !self->priv->mbim_qmux) {
+         error = g_error_new (QMI_CORE_ERROR,
+                              QMI_CORE_ERROR_WRONG_STATE,
+                              "Device must be open to send commands");
+@@ -2234,6 +2365,24 @@ qmi_device_command (QmiDevice *self,
+         g_free (printable);
+     }
+ 
++#ifdef MBIM_QMUX
++    /* wrap QMUX in MBIM? */
++    if (self->priv->mbim_qmux) {
++        MbimMessage *mbim;
++
++        mbim = (mbim_message_qmi_msg_set_new (raw_message_len, raw_message, &error));
++        mbim_device_command (self->priv->mbimdev,
++                             mbim,
++                             30,
++                             NULL, /* cancellable */
++                             (GAsyncReadyCallback)mbim_device_command_ready,
++                             self);
++        g_debug ("[%s] Message sent as MBIM\n", self->priv->path_display);
++
++        /* FIXME: check errors, set proper MBIM TID */
++        return;
++     }
++#endif
+     if (!g_output_stream_write_all (self->priv->ostream,
+                                     raw_message,
+                                     raw_message_len,
+diff --git a/src/libqmi-glib/qmi-device.h b/src/libqmi-glib/qmi-device.h
+index cef7c50..81e88f5 100644
+--- a/src/libqmi-glib/qmi-device.h
++++ b/src/libqmi-glib/qmi-device.h
+@@ -95,6 +95,7 @@ gboolean      qmi_device_is_open          (QmiDevice *self);
+  * @QMI_DEVICE_OPEN_FLAGS_NET_QOS_HEADER: set network port to transmit/receive QoS headers; mutually exclusive with @QMI_DEVICE_OPEN_FLAGS_NET_NO_QOS_HEADER
+  * @QMI_DEVICE_OPEN_FLAGS_NET_NO_QOS_HEADER: set network port to not transmit/receive QoS headers; mutually exclusive with @QMI_DEVICE_OPEN_FLAGS_NET_QOS_HEADER
+  * @QMI_DEVICE_OPEN_FLAGS_PROXY: Try to open the port through the 'qmi-proxy'.
++ * @QMI_DEVICE_OPEN_FLAGS_MBIM: open an MBIM port with QMUX tunneling service
+  *
+  * Flags to specify which actions to be performed when the device is open.
+  */
+@@ -106,7 +107,8 @@ typedef enum {
+     QMI_DEVICE_OPEN_FLAGS_NET_RAW_IP        = 1 << 3,
+     QMI_DEVICE_OPEN_FLAGS_NET_QOS_HEADER    = 1 << 4,
+     QMI_DEVICE_OPEN_FLAGS_NET_NO_QOS_HEADER = 1 << 5,
+-    QMI_DEVICE_OPEN_FLAGS_PROXY             = 1 << 6
++    QMI_DEVICE_OPEN_FLAGS_PROXY             = 1 << 6,
++    QMI_DEVICE_OPEN_FLAGS_MBIM              = 1 << 7
+ } QmiDeviceOpenFlags;
+ 
+ void         qmi_device_open        (QmiDevice *self,
+-- 
+2.11.0
+

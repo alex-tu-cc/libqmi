@@ -1,0 +1,42 @@
+From f68de69686773920fdf46425f087fbbe14c67c3b Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Wed, 8 Jun 2016 07:28:05 +0200
+Subject: [PATCH 12/19] libqmi-glib,device: fix build with mbim-qmux disabled
+
+---
+ src/libqmi-glib/qmi-device.c | 19 ++++++++++++-------
+ 1 file changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/src/libqmi-glib/qmi-device.c b/src/libqmi-glib/qmi-device.c
+index b2ed58c..cc900be 100644
+--- a/src/libqmi-glib/qmi-device.c
++++ b/src/libqmi-glib/qmi-device.c
+@@ -2479,13 +2479,18 @@ qmi_device_command (QmiDevice *self,
+     tr = transaction_new (self, message, cancellable, callback, user_data);
+ 
+     /* Device must be open */
+-    if ((!self->priv->istream || !self->priv->ostream) && !self->priv->mbimdev) {
+-        error = g_error_new (QMI_CORE_ERROR,
+-                             QMI_CORE_ERROR_WRONG_STATE,
+-                             "Device must be open to send commands");
+-        transaction_complete_and_free (tr, NULL, error);
+-        g_error_free (error);
+-        return;
++    if (!self->priv->istream || !self->priv->ostream) {
++#if defined MBIM_QMUX_ENABLED
++        if (!self->priv->mbimdev)
++#endif
++        {
++            error = g_error_new (QMI_CORE_ERROR,
++                                 QMI_CORE_ERROR_WRONG_STATE,
++                                 "Device must be open to send commands");
++            transaction_complete_and_free (tr, NULL, error);
++            g_error_free (error);
++            return;
++        }
+     }
+ 
+     /* Non-CTL services should use a proper CID */
+-- 
+2.11.0
+

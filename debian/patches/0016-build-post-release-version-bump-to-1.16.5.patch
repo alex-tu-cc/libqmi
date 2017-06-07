@@ -1,0 +1,27 @@
+From c04927a2b37dff5f893f5dba145d37e4c3a8f524 Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Tue, 21 Mar 2017 12:37:33 +0100
+Subject: [PATCH 16/19] build: post release version bump to 1.16.5
+
+---
+ configure.ac | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 763b254..d3b651c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -3,8 +3,8 @@ AC_PREREQ([2.68])
+ 
+ dnl The QMI version number
+ m4_define([qmi_major_version], [1])
+-m4_define([qmi_minor_version], [14])
+-m4_define([qmi_micro_version], [0])
++m4_define([qmi_minor_version], [16])
++m4_define([qmi_micro_version], [5])
+ m4_define([qmi_version],
+           [qmi_major_version.qmi_minor_version.qmi_micro_version])
+ 
+-- 
+2.11.0
+

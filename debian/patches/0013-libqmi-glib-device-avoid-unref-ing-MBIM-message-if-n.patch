@@ -1,0 +1,27 @@
+From 5aedd8e84b3f94f4fe16844c2bbf0e865d1bf6cf Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Mon, 27 Jun 2016 07:42:37 +0200
+Subject: [PATCH 13/19] libqmi-glib,device: avoid unref-ing MBIM message if
+ none received
+
+---
+ src/libqmi-glib/qmi-device.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/libqmi-glib/qmi-device.c b/src/libqmi-glib/qmi-device.c
+index cc900be..088dd69 100644
+--- a/src/libqmi-glib/qmi-device.c
++++ b/src/libqmi-glib/qmi-device.c
+@@ -2336,7 +2336,8 @@ mbim_device_command_ready (MbimDevice             *dev,
+     if (!response || !mbim_message_response_get_result (response, MBIM_MESSAGE_TYPE_COMMAND_DONE, &error)) {
+         g_prefix_error (&error, "MBIM error: ");
+         transaction_complete_and_free (tr, NULL, error);
+-        mbim_message_unref (response);
++        if (response)
++            mbim_message_unref (response);
+         mbim_transaction_context_free (ctx);
+         return;
+     }
+-- 
+2.11.0
+

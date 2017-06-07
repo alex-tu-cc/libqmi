@@ -1,0 +1,49 @@
+From 0269a102584616d710be5022c80dbba615db186e Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Mon, 6 Jun 2016 15:55:08 +0200
+Subject: [PATCH 05/19] libqmi-glib,device: fix indentation
+
+---
+ src/libqmi-glib/qmi-device.c | 24 ++++++++++++------------
+ 1 file changed, 12 insertions(+), 12 deletions(-)
+
+diff --git a/src/libqmi-glib/qmi-device.c b/src/libqmi-glib/qmi-device.c
+index c071168..340e223 100644
+--- a/src/libqmi-glib/qmi-device.c
++++ b/src/libqmi-glib/qmi-device.c
+@@ -1853,20 +1853,20 @@ mbim_device_open_ready (MbimDevice *dev,
+                         GAsyncResult *res,
+                         DeviceOpenContext *ctx)
+ {
+-        GError *error = NULL;
+-
+-        if (!mbim_device_open_finish (dev, res, &error)) {
+-            g_simple_async_result_take_error (ctx->result, error);
+-            device_open_context_complete_and_free (ctx);
+-            return;
+-        }
+-        g_debug ("[%s] MBIM device Open..",
+-                ctx->self->priv->path_display);
++    GError *error = NULL;
+ 
+-        /* Go on */
+-        ctx->step++;
+-        device_open_context_step (ctx);
++    if (!mbim_device_open_finish (dev, res, &error)) {
++        g_simple_async_result_take_error (ctx->result, error);
++        device_open_context_complete_and_free (ctx);
+         return;
++    }
++
++    g_debug ("[%s] MBIM device Open..",
++             ctx->self->priv->path_display);
++
++    /* Go on */
++    ctx->step++;
++    device_open_context_step (ctx);
+ }
+ 
+ static void
+-- 
+2.11.0
+

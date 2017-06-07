@@ -1,0 +1,48 @@
+From 7d38bd32a7685750ad3e5f9b1ebf92bc714c2711 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Bj=C3=B8rn=20Mork?= <bjorn@mork.no>
+Date: Mon, 4 Apr 2016 14:47:01 +0200
+Subject: [PATCH 03/19] qmicli: support MBIM EXT_QMUX devices
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Bjørn Mork <bjorn@mork.no>
+---
+ src/qmicli/qmicli.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/qmicli/qmicli.c b/src/qmicli/qmicli.c
+index e1b54cd..5af3e76 100644
+--- a/src/qmicli/qmicli.c
++++ b/src/qmicli/qmicli.c
+@@ -53,6 +53,7 @@ static gboolean device_open_version_info_flag;
+ static gboolean device_open_sync_flag;
+ static gchar *device_open_net_str;
+ static gboolean device_open_proxy_flag;
++static gboolean device_open_mbim_flag;
+ static gchar *client_cid_str;
+ static gboolean client_no_release_cid_flag;
+ static gboolean verbose_flag;
+@@ -84,6 +85,10 @@ static GOptionEntry main_entries[] = {
+       "Request to use the 'qmi-proxy' proxy",
+       NULL
+     },
++    { "device-open-mbim", 0, 0, G_OPTION_ARG_NONE, &device_open_mbim_flag,
++      "Open an MBIM device with EXT_QMUX support",
++      NULL
++    },
+     { "device-open-net", 0, 0, G_OPTION_ARG_STRING, &device_open_net_str,
+       "Open device with specific link protocol and QoS flags",
+       "[net-802-3|net-raw-ip|net-qos-header|net-no-qos-header]"
+@@ -490,6 +495,8 @@ device_new_ready (GObject *unused,
+         open_flags |= QMI_DEVICE_OPEN_FLAGS_SYNC;
+     if (device_open_proxy_flag)
+         open_flags |= QMI_DEVICE_OPEN_FLAGS_PROXY;
++    if (device_open_mbim_flag)
++        open_flags |= QMI_DEVICE_OPEN_FLAGS_MBIM;
+     if (device_open_net_str)
+         if (!qmicli_read_net_open_flags_from_string (device_open_net_str, &open_flags))
+             exit (EXIT_FAILURE);
+-- 
+2.11.0
+
