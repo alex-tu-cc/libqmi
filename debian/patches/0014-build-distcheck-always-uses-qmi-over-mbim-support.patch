@@ -1,0 +1,27 @@
+From dc6764ae250becd568941e55c1b06f493b0f140a Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Thu, 7 Jul 2016 19:37:13 +0200
+Subject: [PATCH 14/19] build: distcheck always uses qmi-over-mbim support
+
+---
+ Makefile.am | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 7970fbe..4d2ce1a 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -5,7 +5,9 @@ ACLOCAL_AMFLAGS = -I m4
+ 
+ DISTCHECK_CONFIGURE_FLAGS = \
+ 	--with-udev-base-dir="$$dc_install_base" \
+-	--enable-gtk-doc
++	--enable-gtk-doc \
++	--enable-mbim-qmux \
++	$(NULL)
+ 
+ EXTRA_DIST = \
+ 	gtester.make \
+-- 
+2.11.0
+

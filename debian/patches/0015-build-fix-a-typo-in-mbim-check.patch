@@ -1,0 +1,25 @@
+From 2336837fda2659e84895b89730a50b5cf17abca5 Mon Sep 17 00:00:00 2001
+From: Lubomir Rintel <lkundrak@v3.sk>
+Date: Fri, 8 Jul 2016 16:57:25 +0200
+Subject: [PATCH 15/19] build: fix a typo in mbim check
+
+---
+ configure.ac | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/configure.ac b/configure.ac
+index 4e7f7d9..763b254 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -108,7 +108,7 @@ if test "x$enable_mbim_qmux" = "xauto"; then
+ fi
+ 
+ if test "x$enable_mbim_qmux" = "xyes"; then
+-    if test "xhave_mbim" = "xno"; then
++    if test "x$have_mbim" = "xno"; then
+         AC_MSG_ERROR([Couldn't find `libmbim-glib` >= ${MBIM_GLIB_VERSION}. Install it, or otherwise configure using --disable-mbim-qmux to disable the QMI over MBIM QMUX service.])
+     fi
+     AC_DEFINE(MBIM_QMUX_ENABLED, 1, [Define if MBIM QMUX support enabled])
+-- 
+2.11.0
+

@@ -1,0 +1,26 @@
+From dfeb2f5b45a379f22cad3cf80290a0ffd3eeb4b3 Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Tue, 18 Apr 2017 15:29:12 +0200
+Subject: [PATCH 17/19] libqmi-glib,device: fix memleak in set_instance_id()
+ logic
+
+(cherry picked from commit fed84d99cd5e155be41dc55e599a3f5f5881cc7a)
+---
+ src/libqmi-glib/qmi-device.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/libqmi-glib/qmi-device.c b/src/libqmi-glib/qmi-device.c
+index 088dd69..dbc61e4 100644
+--- a/src/libqmi-glib/qmi-device.c
++++ b/src/libqmi-glib/qmi-device.c
+@@ -1176,6 +1176,7 @@ set_instance_id_ready (QmiClientCtl *client_ctl,
+     }
+ 
+     g_simple_async_result_complete (simple);
++    g_object_unref (simple);
+ }
+ 
+ /**
+-- 
+2.11.0
+

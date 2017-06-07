@@ -1,0 +1,137 @@
+From 5bad5363af5614d67561a826da4a0eeb8c613688 Mon Sep 17 00:00:00 2001
+From: Aleksander Morgado <aleksander@aleksander.es>
+Date: Mon, 6 Jun 2016 15:38:48 +0200
+Subject: [PATCH 04/19] build: update `--enable-mbim-qmux' rules
+
+If libmbim 1.14.0 found, enable QMI over MBIM support.
+---
+ configure.ac                 | 21 +++++++++++++++------
+ src/libqmi-glib/qmi-device.c | 19 +++++++++++--------
+ 2 files changed, 26 insertions(+), 14 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index e370c48..5eb4d5d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -96,17 +96,26 @@ fi
+ AM_CONDITIONAL([QMI_USERNAME_ENABLED], [test "x$QMI_USERNAME_ENABLED" = "xyes"])
+ 
+ # MBIM QMUX service support
++MBIM_GLIB_VERSION=1.14.0
++PKG_CHECK_MODULES([MBIM], [mbim-glib >= ${MBIM_GLIB_VERSION}], [have_mbim=yes], [have_mbim=no])
+ AC_ARG_ENABLE(mbim-qmux,
+-              AS_HELP_STRING([--enable-mbim-qmux], [support QMI over MBIM QMUX service]))
+-if test -n "$enable_mbim_qmux"; then
+-    PKG_CHECK_MODULES(MBIM, mbim-glib >= 1.13)
+-    MBIM_CFLAGS="$MBIM_CFLAGS -DMBIM_QMUX"
++              AS_HELP_STRING([--enable-mbim-qmux], [Enable support for QMI over MBIM QMUX service [default=auto]]),
++              [enable_mbim_qmux=$enableval],
++              [enable_mbim_qmux=auto])
++
++if test "x$enable_mbim_qmux" = "xauto"; then
++    enable_mbim_qmux=$have_mbim
++fi
++
++if test "x$enable_mbim_qmux" = "xyes"; then
++    if test "xhave_mbim" = "xno"; then
++        AC_MSG_ERROR([Couldn't find `libmbim-glib` >= ${MBIM_GLIB_VERSION}. Install it, or otherwise configure using --disable-mbim-qmux to disable the QMI over MBIM QMUX service.])
++    fi
++    AC_DEFINE(MBIM_QMUX_ENABLED, 1, [Define if MBIM QMUX support enabled])
+     AC_SUBST(MBIM_CFLAGS)
+     AC_SUBST(MBIM_LIBS)
+ fi
+ 
+-AM_CONDITIONAL(MBIM_QMUX, [test -n "$MBIM_CFLAGS"])
+-
+ # udev base directory
+ AC_ARG_WITH(udev-base-dir, AS_HELP_STRING([--with-udev-base-dir=DIR], [where udev base directory is]))
+ if test -n "$with_udev_base_dir" ; then
+diff --git a/src/libqmi-glib/qmi-device.c b/src/libqmi-glib/qmi-device.c
+index a3a4565..c071168 100644
+--- a/src/libqmi-glib/qmi-device.c
++++ b/src/libqmi-glib/qmi-device.c
+@@ -21,6 +21,9 @@
+  * Copyright (C) 2012 - 2014 Aleksander Morgado <aleksander@aleksander.es>
+  */
+ 
++#include <config.h>
++
++#include <stdio.h>
+ #include <errno.h>
+ #include <string.h>
+ #include <fcntl.h>
+@@ -31,7 +34,7 @@
+ #include <gio/gunixoutputstream.h>
+ #include <gio/gunixsocketaddress.h>
+ 
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+ #include <libmbim-glib.h>
+ #endif
+ 
+@@ -94,7 +97,7 @@ struct _QmiDevicePrivate {
+     gboolean no_file_check;
+     gchar *proxy_path;
+     gboolean mbim_qmux;
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+     MbimDevice *mbimdev;
+ #endif
+ 
+@@ -1844,7 +1847,7 @@ internal_proxy_open_ready (QmiClientCtl *client_ctl,
+     device_open_context_step (ctx);
+ }
+ 
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+ static void
+ mbim_device_open_ready (MbimDevice *dev,
+                         GAsyncResult *res,
+@@ -1926,7 +1929,7 @@ device_open_context_step (DeviceOpenContext *ctx)
+         /* Fall down */
+ 
+     case DEVICE_OPEN_CONTEXT_STEP_CREATE_IOSTREAM:
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+         if (ctx->flags & QMI_DEVICE_OPEN_FLAGS_MBIM) {
+             GFile *file;
+ 
+@@ -2144,7 +2147,7 @@ destroy_iostream (QmiDevice *self,
+     return TRUE;
+ }
+ 
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+ static void
+ mbim_device_close_ready (MbimDevice   *dev,
+                     GAsyncResult *res)
+@@ -2176,7 +2179,7 @@ qmi_device_close (QmiDevice *self,
+ {
+     g_return_val_if_fail (QMI_IS_DEVICE (self), FALSE);
+ 
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+     if (self->priv->mbim_qmux)
+         mbim_device_close (self->priv->mbimdev,
+                            15,
+@@ -2193,7 +2196,7 @@ qmi_device_close (QmiDevice *self,
+     return TRUE;
+ }
+ 
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+ static void
+ mbim_device_command_ready (MbimDevice   *dev,
+                            GAsyncResult *res,
+@@ -2365,7 +2368,7 @@ qmi_device_command (QmiDevice *self,
+         g_free (printable);
+     }
+ 
+-#ifdef MBIM_QMUX
++#if defined MBIM_QMUX_ENABLED
+     /* wrap QMUX in MBIM? */
+     if (self->priv->mbim_qmux) {
+         MbimMessage *mbim;
+-- 
+2.11.0
+
