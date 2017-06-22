@@ -1,0 +1,28 @@
+From 6e4f4bb7ea886a2531d00c37e8eea9ca7dc78377 Mon Sep 17 00:00:00 2001
+From: Alex Tu <alex.tu@canonical.com>
+Date: Wed, 28 Jun 2017 02:12:10 -0400
+Subject: [PATCH] try bump version
+
+---
+ configure.ac | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 9cb94c1..bc2ed2c 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -16,9 +16,9 @@ dnl        If the interface has grown (that is, the new library is compatible
+ dnl            with old code), increment a.
+ dnl        If the interface has changed in an incompatible way (that is,
+ dnl            functions have changed or been removed), then zero a.
+-m4_define([qmi_glib_lt_current],  [4])
++m4_define([qmi_glib_lt_current],  [5])
+ m4_define([qmi_glib_lt_revision], [0])
+-m4_define([qmi_glib_lt_age],      [3])
++m4_define([qmi_glib_lt_age],      [4])
+ 
+ 
+ AC_INIT([libqmi], [qmi_version], [libqmi-devel@lists.freedesktop.org])
+-- 
+2.7.4
+
