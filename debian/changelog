@@ -1,3 +1,9 @@
+libqmi (1.12.6-1ubuntu1oem2) xenial; urgency=medium
+
+  * Depends on new version libmbim to decide enabling qmi over mbim.
+
+ -- Alex Tu <alex.tu@canonical.com>  Thu, 22 Jun 2017 18:31:13 +0800
+
 libqmi (1.12.6-1ubuntu1oem1) xenial; urgency=medium
 
   * backport qmi over mbim feature, also need libmbim and modemmanager be

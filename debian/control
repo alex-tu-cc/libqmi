@@ -2,7 +2,7 @@ Source: libqmi
 Priority: optional
 Maintainer: Marius B. Kotsbak <marius@kotsbak.com>
 Uploaders: Michael Biebl <biebl@debian.org>
-Build-Depends: debhelper (>= 9), dh-autoreconf, libglib2.0-dev (>= 2.32), pkg-config, intltool, gtk-doc-tools, python, libglib2.0-doc
+Build-Depends: debhelper (>= 9), dh-autoreconf, libglib2.0-dev (>= 2.32), pkg-config, intltool, gtk-doc-tools, python, libglib2.0-doc, libmbim-glib-dev (>= 1.12.2-2ubuntu1oem1)
 Standards-Version: 3.9.6
 Section: libs
 Homepage: http://www.freedesktop.org/wiki/Software/libqmi
