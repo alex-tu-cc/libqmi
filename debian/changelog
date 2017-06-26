@@ -1,3 +1,15 @@
+libqmi (1.12.6-1oem4) xenial; urgency=medium
+
+  * bump version
+
+ -- Alex Tu <alex.tu@canonical.com>  Mon, 26 Jun 2017 17:35:27 +0800
+
+libqmi (1.12.6-1oem3) xenial; urgency=medium
+
+  * bump version
+
+ -- Alex Tu <alex.tu@canonical.com>  Mon, 26 Jun 2017 15:13:26 +0800
+
 libqmi (1.12.6-1oem2) xenial; urgency=medium
 
   * Depends on new version libmbim to decide enabling qmi over mbim.

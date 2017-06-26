@@ -22,7 +22,7 @@ Description: Header files for adding QMI support to applications that use glib
 Package: libqmi-glib-doc
 Section: doc
 Architecture: all
-Depends: libmbim-glib-dev (>= 1.12.2-2ubuntu1oem1), ${misc:Depends}
+Depends: ${misc:Depends}
 Suggests: devhelp
 Description: API documentation for libqmi-glib
  This package provides the API documentation for libqmi-glib for adding
@@ -32,7 +32,7 @@ Package: libqmi-glib1
 Section: libs
 Architecture: linux-any
 Multi-Arch: same
-Pre-Depends: ${misc:Pre-Depends}
+Pre-Depends: libmbim-glib4 (>= 1.12.2-2ubuntu1oem1), ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
 Description: Support library to use the Qualcomm MSM Interface (QMI) protocol
  Libraries for adding QMI support to applications that use glib.
