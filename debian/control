@@ -22,7 +22,7 @@ Description: Header files for adding QMI support to applications that use glib
 Package: libqmi-glib-doc
 Section: doc
 Architecture: all
-Depends: ${misc:Depends}
+Depends: libmbim-glib-dev (>= 1.12.2-2ubuntu1oem1), ${misc:Depends}
 Suggests: devhelp
 Description: API documentation for libqmi-glib
  This package provides the API documentation for libqmi-glib for adding
