@@ -1,4 +1,3 @@
-0001-release-bump-version-to-1.14.0.patch
 0002-libqmi-support-MBIM-EXT_QMUX-service.patch
 0003-qmicli-support-MBIM-EXT_QMUX-devices.patch
 0004-build-update-enable-mbim-qmux-rules.patch
@@ -13,6 +12,6 @@
 0013-libqmi-glib-device-avoid-unref-ing-MBIM-message-if-n.patch
 0014-build-distcheck-always-uses-qmi-over-mbim-support.patch
 0015-build-fix-a-typo-in-mbim-check.patch
-0016-build-post-release-version-bump-to-1.16.5.patch
 0017-libqmi-glib-device-fix-memleak-in-set_instance_id-lo.patch
 0018-backport-qmi-over-mbim-to-libmbim-glib4-1.12.2-and-l.patch
+0019-try-bump-version.patch
