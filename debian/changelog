@@ -1,3 +1,9 @@
+libqmi (1.12.6-1oem5) xenial; urgency=medium
+
+  * bump version
+
+ -- Alex Tu <alex.tu@canonical.com>  Wed, 28 Jun 2017 16:52:51 +0800
+
 libqmi (1.12.6-1oem4) xenial; urgency=medium
 
   * bump version
